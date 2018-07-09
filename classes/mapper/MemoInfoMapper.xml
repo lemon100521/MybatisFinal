@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dyy.mybatis.mapper.MemoInfoMapper">
+    <!--加载默认二级缓存-->
+    <!--</cache>-->
+    <!--加载自定义二级缓存-->
+    <!--<cache type="com.dyy.mybatis.plugin.MyCache"/>-->
+    <!--加载二级缓存的第三方框架-->
+    <!--<cache type="org.mybatis.caches.ehcache.EhcacheCache"/>-->
+
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache">
+        <property name="timeToIdleSeconds" value="3600"/><!--1 hour-->
+        <property name="timeToLiveSeconds" value="3600"/><!--1 hour-->
+        <property name="maxEntriesLocalHeap" value="1000"/>
+        <property name="maxEntriesLocalDisk" value="10000000"/>
+        <property name="memoryStoreEvictionPolicy" value="LRU"/>
+    </cache>
+
+
+    <sql id="BasicMemoInfo">
+        id,
+        group_id,
+        title,
+        content,
+        is_protected,
+        background,
+        is_remind,
+        remind_time,
+        created_time,
+        modify_time
+    </sql>
+
+    <sql id="AliasMemoInfo">
+        id as 'id',
+        group_id as 'groupId',
+        title as 'title',
+        content as 'content',
+        is_protected as 'isProtected',
+        background as 'backGround',
+        is_remind as 'remind',
+        remind_time as 'remindTime',
+        created_time as 'createdTime',
+        modify_time as 'modifyTime'
+    </sql>
+
+    <!--<resultMap id="memoInfoMap" type="com.dyy.mybatis.entity.MemoInfo">-->
+        <!--<id column="id" property="id" jdbcType="INTEGER"/>-->
+        <!--<result column="group_id" property="groupId" jdbcType="INTEGER"/>-->
+        <!--<result column="=title" property="title" jdbcType="VARCHAR"/>-->
+        <!--<result column="content" property="content" jdbcType="VARCHAR"/>-->
+        <!--<result column="is_protected" property="isProtected" jdbcType="CHAR"/>-->
+        <!--<result column="background" property="backGround" jdbcType="CHAR"/>-->
+        <!--<result column="is_remind" property="remind" jdbcType="CHAR"/>-->
+        <!--<result column="remind_time" property="remindTime" jdbcType="TIMESTAMP"/>-->
+        <!--<result column="created_time" property="createdTime" jdbcType="TIMESTAMP" />-->
+        <!--<result column="modify_time" property="modifyTime" jdbcType="TIMESTAMP"/>-->
+    <!--</resultMap>-->
+
+    <insert id="insertMemoInfo" keyColumn="id" keyProperty="id" parameterType="com.dyy.mybatis.entity.MemoInfo">
+        insert into memo_info(group_id,title,content,is_protected,background,is_remind,remind_time,created_time)
+         values (#{groupId},#{title},#{content},#{isProtected},#{backGround},
+         #{remind},#{remindTime},#{createdTime})
+    </insert>
+
+    <update id="updateMemoInfo">
+       update memo_info set content=#{content} where id=#{id}
+    </update>
+    <update id="updateMemoInfoWithObject">
+        update memo_info set content=#{content} where id=#{id}
+    </update>
+    <update id="updateExceptedContent">
+        update memo_info
+        <set>
+            <if test="groupId!=null">
+                group_id=#{groupId},
+            </if>
+            <if test="title!=null">
+                title=#{title},
+            </if>
+            <if test="content!=null">
+                content=#{content},
+            </if>
+            <if test="isProtected!=null">
+                is_protected=#{isProtected},
+            </if>
+            <if test="isRemind!=null">
+                is_remind=#{isRemind},
+            </if>
+            <if test="remindTime!=null">
+                remind_time=#{remindTime}
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <delete id="deleteMemoInfoById">
+        delete from memo_info where  id=#{id};
+    </delete>
+
+    <select id="queryMemoInfoById" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+         from memo_info where id=#{id}
+    </select>
+
+    <select id="queryMemoInfoByIdReturnHashMap" resultType="java.util.HashMap">
+        select
+        <include refid="BasicMemoInfo"/>
+         from memo_info where id=#{id}
+    </select>
+
+    <select id="queryMemoInfoAll" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="AliasMemoInfo"/>
+        from memo_info
+    </select>
+
+    <select id="queryMemoInfoAllReturnHashMap" resultType="java.util.HashMap">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+    </select>
+    <select id="queryMemoInfoByPage" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info order by ${orderColumnName} desc limit #{pageSize} offset #{pageOffset}
+    </select>
+
+
+    <select id="queryMemoInfoByPageObject" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info order by ${orderColumnName} desc limit #{pageSize} offset #{pageOffset}
+    </select>
+
+    <select id="queryMemoInfoWithTitleAndProtected" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        where
+        <if test="title!=null">
+            title = #{title}
+        </if>
+        <if test="isProtected">
+           and is_protected= #{isProtected}
+        </if>
+    </select>
+    <select id="queryMemoInfoBetweenStartTimeAndEndTime" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="AliasMemoInfo"/>
+        from memo_info
+        <where>
+            <if test="startTime!=null">
+                created_time &gt;=#{startTime}
+            </if>
+            <if test="endTime">
+                and created_time &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+    <select id="queryMemoInfoWithTitleOrContent" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        where title = #{title} or content = #{content}
+        <!--<choose>-->
+            <!--<when test="title!=null">-->
+                <!--title = #{title}-->
+            <!--</when>-->
+            <!--<when test="content!=null">-->
+                <!--content=#{content}-->
+            <!--</when>-->
+        <!--</choose>-->
+    </select>
+    <select id="queryMemoInfoInSameStation" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select 
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        <where>
+            id in 
+            <foreach collection="list" open="(" separator="," close=")" item="item" index="index">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+    <select id="queryMemoByPage1" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info order by #{pageSize} offset #{pageOffset}
+    </select>
+    <select id="queryMemoInfoWithPrivacyAndLikeTitle" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        where is_protected='0'
+        <if test="title!=null">
+            and title=#{title}
+        </if>
+    </select>
+    <select id="queryMemoInfoWithPrivacyAndLikeTitleAndBackground"
+            resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        where is_protected="0"
+        <if test="title!=null">
+           and title like #{title}
+        </if>
+        <if test="backGround!=null">
+           and background like #{backGround}
+        </if>
+    </select>
+    <select id="queryMemoInfoWithPrivacyAndLikeTitleAndBackground2"
+            resultType="com.dyy.mybatis.entity.MemoInfo">
+<!--         方式一  -->
+        <!--select-->
+        <!--<include refid="BasicMemoInfo"/>-->
+        <!--from memo_info-->
+        <!--<where>-->
+            <!--<if test="isProtected!=null">-->
+                <!--is_protected = #{isProtected}-->
+            <!--</if>-->
+            <!--<if test="title!=null">-->
+                <!--and title=#{title}-->
+            <!--</if>-->
+            <!--<if test="backGround">-->
+               <!--and background= #{backGround}-->
+            <!--</if>-->
+        <!--</where>-->
+<!--    方式二   -->
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        <trim prefix="where" prefixOverrides="and | or">
+            <if test="isProtected!=null">
+                is_protected = #{isProtected}
+            </if>
+            <if test="title!=null">
+                and title = #{title}
+            </if>
+            <if test="backGround!=null">
+                and background = #{backGround}
+            </if>
+        </trim>
+    </select>
+    <select id="queryMemoInfoWithPrivacyAndLikeTitleOrBackground" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        <where>
+            is_protected='0'
+            <choose>
+                <when test="title!=null">
+                  and  title = #{title}
+                </when>
+                <when test="backGround">
+                   and background=#{backGround}
+                </when>
+                <otherwise>
+                    and id=8
+                </otherwise>
+            </choose>
+
+        </where>
+    </select>
+    <select id="queryMemoInfoByList" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        <where>
+            id in
+            <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+    <select id="queryMemoInfoByArray" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select 
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        <where>
+            id in 
+            <foreach collection="array" open="(" close=")" separator="," item="item" index="index">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+    <select id="queryMemoInfoByMap" resultType="com.dyy.mybatis.entity.MemoInfo">
+        select 
+        <include refid="BasicMemoInfo"/>
+        from memo_info
+        <where>
+            <if test="title!=null">
+                title like #{title}
+            </if>
+            <if test="list!=null">
+                and id in
+                <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+</mapper>
